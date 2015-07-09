@@ -20,7 +20,7 @@ if (Meteor.isClient) {
 if (Meteor.isServer) {
 
   Rates.config({
-    // Name of collection to use for synchronisation and logging
+    // Name of collection used for storing the rates.
     collectionName: 'rates'
   });
 
