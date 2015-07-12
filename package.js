@@ -1,7 +1,7 @@
 Package.describe({
   name: 'robodo:exchange-rates',
   summary: 'A simple package fetching ECB exchange rates and storing them in a collection.',
-  version: '0.0.1',
+  version: '0.0.2',
   git: 'https://github.com/orangewise/robodo-exchange-rates.git'
 });
 
