@@ -13,7 +13,7 @@ $ meteor add robodo:exchange-rates
 
 ### Basics
 
-Fill/refresh you collection:
+Fill/refresh your collection:
 
 ``` js
 Rates.refreshRates() 
