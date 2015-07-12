@@ -160,7 +160,34 @@ Rates = {
           {upsert: true}
        );
     });
+  },
+
+
+  refreshRates: function (callback) {
+    var self = this;
+    if (!this.refreshing) {
+      self.refreshing = true;
+
+      HTTP.get(self.settings.url, function(error, response) {
+        if (!error && response.statusCode == 200) {
+          self.parseXML(response, function () {
+            self.refreshing = false;
+            var r = 'Rates have been refreshed.';
+            console.log(r);
+            callback && callback(null, r);
+          });
+        } else {
+          var e = 'Error when calling ' + self.settings.url + ' error ' + error;
+          console.log(e);
+          callback && callback(e);
+        }
+      });    
+
+    } else {
+      console.log('Rates are currently being refreshed...');
+    }
   }
+
 };
 
 
@@ -173,28 +200,4 @@ Meteor.startup( function () {
 });
 
 
-Rates.refreshRates = function (callback) {
-  var self = this;
-  if (!this.refreshing) {
-    self.refreshing = true;
-
-    HTTP.get(self.settings.url, function(error, response) {
-      if (!error && response.statusCode == 200) {
-        self.parseXML(response, function () {
-          self.refreshing = false;
-          var r = 'Rates have been refreshed.';
-          console.log(r);
-          callback && callback(null, r);
-        });
-      } else {
-        var e = 'Error when calling ' + self.settings.url + ' error ' + error;
-        console.log(e);
-        callback && callback(e);
-      }
-    });    
-
-  } else {
-    console.log('Rates are currently being refreshed...');
-  }
-};
 

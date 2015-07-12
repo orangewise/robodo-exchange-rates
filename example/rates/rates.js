@@ -21,7 +21,9 @@ if (Meteor.isServer) {
 
   Rates.config({
     // Name of collection used for storing the rates.
-    collectionName: 'rates'
+    collectionName: 'rates',
+    //
+    autoRefresh: false
   });
 
   Meteor.methods({

@@ -42,8 +42,14 @@ You can configure Rates with the `config` method. Defaults are:
 
 ``` js
 Rates.config({
+
   // Name of collection used for storing the rates.
-  collectionName: 'exchange_rates'
+  collectionName: 'exchange_rates',
+  // Try to refresh rates while querying rates.
+  autoRefresh: true,
+  // Refresh interval in hours.
+  refreshInterval: 4
+
 });
 ```
 
