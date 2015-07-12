@@ -1,10 +1,17 @@
 var xml2js = Npm.require('xml2js');
 
 Rates = {
+
   options: {
 
-    // Name of collection to use
-    collectionName: 'exchange_rates'
+    // Name of collection to use.
+    collectionName: 'exchange_rates',
+
+    // Kick of refresh while querying rates collection.
+    autoRefresh: true,
+    
+    // Refresh interval in hours.
+    refreshInterval: 4
 
   },
 
@@ -21,7 +28,7 @@ Rates = {
 
   refreshing: false,
 
-  conversionRate: function (from, to) {
+  conversionRate: function (from, to, callback) {
     var self = this;
     var doc, rate;
 
@@ -46,58 +53,83 @@ Rates = {
         rate = 1/rate * eurRate;
       }
       
-      if (doc && self.hoursBetween(doc.updated, new Date()) >= 0) {
+      if (self.options.autoRefresh && 
+          doc &&
+          self.hoursBetween(doc.updated, new Date()) >= self.options.refreshInterval) 
+      {
         console.log('+++++++++++++refresh');
         self.refreshRates();
       }
-      return self.roundValues(rate, self.settings.accuracy);
+      callback && callback(null, self.roundValues(rate, self.settings.accuracy));
+
     } catch (error) {
-      console.log('catc',error);
-      self.refreshRates();
-      return undefined;
+      console.log('conversionRate error', error);
+      if (self.options.autoRefresh) {
+        console.log('call refresh');
+
+        self.refreshRates(function (error) {
+          if (error) {
+            callback && callback(error);
+
+          } else {
+            // Try to find rate once more.
+            self.conversionRate(from, to, function (error, result) {
+              if (error) {
+                callback && callback(error);                 
+              } else {
+                callback && callback(null, result);
+              }
+            });
+          }
+        });
+
+      } else {
+        callback && callback(error);        
+      } 
     }
 
   },
+
 
   convert: function(amount, from, to, callback) {
     var self = this;
     var exchangedValue = {};
 
-    var exchangeRate = self.conversionRate(from, to);
-    if (exchangeRate === undefined) {
-
-      callback && callback('Exchange rate not found in collection...');
-
-    } else {
-
-      var exchangedAmount = self.roundValues(amount * exchangeRate, self.settings.accuracy);
-      exchangedValue.from = from;
-      exchangedValue.to = to;
-      exchangedValue.rate = exchangeRate;
-      exchangedValue.amount = amount;
-      exchangedValue.exchangedAmount = exchangedAmount;
-
-      callback && callback(null, exchangedValue);
-    }
-
+    self.conversionRate(from, to, function (error, result) {
+      if (error) {
+        callback && callback('Exchange rate not found in collection...' + error);
+      } else {
+        var exchangeRate = result;
+        var exchangedAmount = self.roundValues(amount * exchangeRate, self.settings.accuracy);
+        exchangedValue.from = from;
+        exchangedValue.to = to;
+        exchangedValue.rate = exchangeRate;
+        exchangedValue.amount = amount;
+        exchangedValue.exchangedAmount = exchangedAmount;
+        callback && callback(null, exchangedValue);        
+      }
+    });
   },
+
 
   hoursBetween: function (date1, date2) {
     var ms = date2 - date1;
     var hours = ms * (1/3600000);
-    console.log('ms', ms, 'hours', hours);
     return hours;
   },
+
 
   roundValues: function (value, places) {
     var multiplier = Math.pow(10, places);
     return (Math.round(value * multiplier) / multiplier);
   },
 
+
   removeNamespaces: function (xml) {
     var fixedXML = xml.replace(/(<\/?)(\w+:)/g,'$1');
     return (fixedXML.replace(/xmlns(:\w+)?="[^"]*"/g,'')).trim();
   },
+
 
   parseXML: function(doc, callback) {
     var self = this;
@@ -110,8 +142,8 @@ Rates = {
       self.upsertCurrencies(currencies, lastModified);
       callback && callback();
     });
-
   },
+
 
   upsertCurrencies: function (currencies, lastModified) {
     var self = this;
@@ -120,8 +152,8 @@ Rates = {
     var lastModifiedDate = new Date();
     lastModifiedDate.setTime(lastModified);     
     _.each(currencies, function (item) {
-       var currency = eval('item.$').currency;
-       var rate = Number(eval('item.$').rate);
+       var currency = item.$.currency;
+       var rate = Number(item.$.rate);
        self._collection.update(
           {currency: currency},
           {currency: currency, rate: rate, updated: updated, lastModified: lastModifiedDate}, 
@@ -141,7 +173,7 @@ Meteor.startup( function () {
 });
 
 
-Rates.refreshRates =  function () {
+Rates.refreshRates = function (callback) {
   var self = this;
   if (!this.refreshing) {
     self.refreshing = true;
@@ -150,10 +182,14 @@ Rates.refreshRates =  function () {
       if (!error && response.statusCode == 200) {
         self.parseXML(response, function () {
           self.refreshing = false;
-          console.log('Rates refreshed');
+          var r = 'Rates have been refreshed.';
+          console.log(r);
+          callback && callback(null, r);
         });
       } else {
-        console.log('Error when calling', self.settings.url, error);
+        var e = 'Error when calling ' + self.settings.url + ' error ' + error;
+        console.log(e);
+        callback && callback(e);
       }
     });    
 
