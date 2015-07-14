@@ -165,7 +165,7 @@ Rates = {
 
   refreshRates: function (callback) {
     var self = this;
-    if (!this.refreshing) {
+    if (!self.refreshing) {
       self.refreshing = true;
 
       HTTP.get(self.settings.url, function(error, response) {

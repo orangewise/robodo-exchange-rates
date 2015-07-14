@@ -34,33 +34,51 @@ if (Meteor.isServer) {
 
     test: function () {
       Rates.convert(10, 'EUR', 'USD', function (error, result) {
-        if (error) console.log(error);
-        console.log(result);
+        if (error) {
+          console.log('error',error);
+        } else {
+          console.log(result);
+        }
       });
 
       Rates.convert(10, 'EUR', 'EUR', function (error, result) {
-        if (error) console.log(error);
-        console.log(result);
+        if (error) {
+          console.log('error',error);
+        } else {
+          console.log(result);
+        }
       });
 
       Rates.convert(10, 'USD', 'USD', function (error, result) {
-        if (error) console.log(error);
-        console.log(result);
+        if (error) {
+          console.log('error',error);
+        } else {
+          console.log(result);
+        }
       });
 
       Rates.convert(10, 'USD', 'EUR', function (error, result) {
-        if (error) console.log(error);
-        console.log(result);
+        if (error) {
+          console.log('error',error);
+        } else {
+          console.log(result);
+        }
       });
 
       Rates.convert(10, 'USD', 'SEK', function (error, result) {
-        if (error) console.log(error);
-        console.log(result);
+        if (error) {
+          console.log('error',error);
+        } else {
+          console.log(result);
+        }
       });
 
       Rates.convert(10, 'NOK', 'SEK', function (error, result) {
-        if (error) console.log(error);
-        console.log(result);
+        if (error) {
+          console.log('error',error);
+        } else {
+          console.log(result);
+        }
       });
 
     }
